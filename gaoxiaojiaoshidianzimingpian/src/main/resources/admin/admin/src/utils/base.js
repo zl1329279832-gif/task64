@@ -1,10 +1,10 @@
 const base = {
     get() {
         return {
-            url : "http://localhost:8080/gaoxiaojiaoshidianzimingpian/",
+            url : "/gaoxiaojiaoshidianzimingpian/",
             name: "gaoxiaojiaoshidianzimingpian",
             // 退出到首页链接
-            indexUrl: 'http://localhost:8080/gaoxiaojiaoshidianzimingpian/front/index.html'
+            indexUrl: '/gaoxiaojiaoshidianzimingpian/front/index.html'
         };
     },
     getProjectName(){

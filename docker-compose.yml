@@ -1,0 +1,47 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:5.7
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+      MYSQL_DATABASE: ${DB_NAME:-gaoxiaojiaoshidianzimingpian}
+      MYSQL_CHARACTER_SET_SERVER: utf8mb4
+      MYSQL_COLLATION_SERVER: utf8mb4_unicode_ci
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql-data:/var/lib/mysql
+      # Mount SQL init scripts (runs only on first start)
+      - ./gaoxiaojiaoshidianzimingpian/sql:/docker-entrypoint-initdb.d:ro
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
+
+  app:
+    build: .
+    restart: unless-stopped
+    depends_on:
+      - mysql
+    ports:
+      - "8080:8080"
+    environment:
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: ${DB_NAME:-gaoxiaojiaoshidianzimingpian}
+      DB_USER: ${DB_USER:-root}
+      DB_PASSWORD: ${DB_PASSWORD}
+      UPLOAD_BASE_PATH: /data/upload
+      SPRING_PROFILES_ACTIVE: prod
+    volumes:
+      # Persistent upload volume — can also be an NFS/NAS mount
+      - upload-data:/data/upload
+
+volumes:
+  mysql-data:
+  upload-data:
+    # To mount a NAS path instead, replace the above with:
+    # driver: local
+    # driver_opts:
+    #   type: nfs
+    #   o: addr=nas.univ.edu,rw,nolock
+    #   device: ":/exports/mingpian-upload"

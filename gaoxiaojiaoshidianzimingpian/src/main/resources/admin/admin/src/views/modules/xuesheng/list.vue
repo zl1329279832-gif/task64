@@ -47,7 +47,7 @@
                         <a style="text-decoration:none" class="el-button el-button--success"
                            v-if="isAuth('xuesheng','导入导出')"
                            icon="el-icon-download"
-                           href="http://localhost:8080/gaoxiaojiaoshidianzimingpian/upload/xueshengMuBan.xls"
+                           href="/gaoxiaojiaoshidianzimingpian/upload/xueshengMuBan.xls"
                         >批量导入学生数据模板</a>
                         &nbsp;
                         <el-upload

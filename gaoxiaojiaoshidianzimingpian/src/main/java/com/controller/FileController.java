@@ -26,6 +26,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import org.springframework.beans.factory.annotation.Value;
+
 import com.annotation.IgnoreAuth;
 import com.baomidou.mybatisplus.mapper.EntityWrapper;
 import com.entity.ConfigEntity;
@@ -42,6 +44,29 @@ import com.utils.R;
 public class FileController{
 	@Autowired
     private ConfigService configService;
+
+	@Value("${upload.base-path:}")
+	private String uploadBasePath;
+
+	private File getUploadDir() {
+		if(uploadBasePath != null && !uploadBasePath.trim().isEmpty()) {
+			File dir = new File(uploadBasePath, "upload");
+			if(!dir.exists()) dir.mkdirs();
+			return dir;
+		}
+		try {
+			File path = new File(ResourceUtils.getURL("classpath:static").getPath());
+			if(!path.exists()) path = new File("");
+			File dir = new File(path.getAbsolutePath(), "/upload/");
+			if(!dir.exists()) dir.mkdirs();
+			return dir;
+		} catch (FileNotFoundException e) {
+			File dir = new File("static/upload/");
+			if(!dir.exists()) dir.mkdirs();
+			return dir;
+		}
+	}
+
 	/**
 	 * 上传文件
 	 */
@@ -51,14 +76,7 @@ public class FileController{
 			throw new EIException("上传文件不能为空");
 		}
 		String fileExt = file.getOriginalFilename().substring(file.getOriginalFilename().lastIndexOf(".")+1);
-		File path = new File(ResourceUtils.getURL("classpath:static").getPath());
-		if(!path.exists()) {
-		    path = new File("");
-		}
-		File upload = new File(path.getAbsolutePath(),"/upload/");
-		if(!upload.exists()) {
-		    upload.mkdirs();
-		}
+		File upload = getUploadDir();
 		String fileName = new Date().getTime()+"."+fileExt;
 		File dest = new File(upload.getAbsolutePath()+"/"+fileName);
 		file.transferTo(dest);
@@ -75,7 +93,7 @@ public class FileController{
 		}
 		return R.ok().put("file", fileName);
 	}
-	
+
 	/**
 	 * 下载文件
 	 */
@@ -83,14 +101,7 @@ public class FileController{
 	@RequestMapping("/download")
 	public ResponseEntity<byte[]> download(@RequestParam String fileName) {
 		try {
-			File path = new File(ResourceUtils.getURL("classpath:static").getPath());
-			if(!path.exists()) {
-			    path = new File("");
-			}
-			File upload = new File(path.getAbsolutePath(),"/upload/");
-			if(!upload.exists()) {
-			    upload.mkdirs();
-			}
+			File upload = getUploadDir();
 			File file = new File(upload.getAbsolutePath()+"/"+fileName);
 			if(file.exists()){
 				/*if(!fileService.canRead(file, SessionManager.getSessionUser())){

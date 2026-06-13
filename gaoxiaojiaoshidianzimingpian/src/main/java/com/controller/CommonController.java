@@ -22,6 +22,8 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import org.springframework.beans.factory.annotation.Value;
+
 import com.annotation.IgnoreAuth;
 import com.baidu.aip.face.AipFace;
 import com.baidu.aip.face.MatchRequest;
@@ -43,9 +45,12 @@ public class CommonController{
 	private static final Logger logger = LoggerFactory.getLogger(CommonController.class);
 	@Autowired
 	private CommonService commonService;
-	
+
 	@Autowired
 	private ConfigService configService;
+
+	@Value("${upload.base-path:}")
+	private String uploadBasePath;
 	
 	private static AipFace client = null;
 	
@@ -86,8 +91,15 @@ public class CommonController{
 		}
 		JSONObject res = null;
 		try {
-			File file1 = new File(request.getSession().getServletContext().getRealPath("/upload")+"/"+face1);
-			File file2 = new File(request.getSession().getServletContext().getRealPath("/upload")+"/"+face2);
+			File file1;
+			File file2;
+			if(uploadBasePath != null && !uploadBasePath.trim().isEmpty()) {
+				file1 = new File(uploadBasePath + "/upload/" + face1);
+				file2 = new File(uploadBasePath + "/upload/" + face2);
+			} else {
+				file1 = new File(request.getSession().getServletContext().getRealPath("/upload")+"/"+face1);
+				file2 = new File(request.getSession().getServletContext().getRealPath("/upload")+"/"+face2);
+			}
 			String img1 = Base64Util.encode(FileUtil.FileToByte(file1));
 			String img2 = Base64Util.encode(FileUtil.FileToByte(file2));
 			MatchRequest req1 = new MatchRequest(img1, "BASE64");

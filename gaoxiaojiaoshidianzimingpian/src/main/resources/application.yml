@@ -9,9 +9,9 @@ server:
 spring:
     datasource:
         driverClassName: com.mysql.cj.jdbc.Driver
-        url: jdbc:mysql://127.0.0.1:3306/gaoxiaojiaoshidianzimingpian?useUnicode=true&characterEncoding=utf-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=GMT%2B8
-        username: root
-        password: 123456
+        url: jdbc:mysql://${DB_HOST:127.0.0.1}:${DB_PORT:3306}/${DB_NAME:gaoxiaojiaoshidianzimingpian}?useUnicode=true&characterEncoding=utf-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=GMT%2B8
+        username: ${DB_USER:root}
+        password: ${DB_PASSWORD:123456}
 
 
     servlet:
@@ -19,7 +19,11 @@ spring:
         max-file-size: 1000MB
         max-request-size: 1000MB
     resources:
-      static-locations: classpath:static/,file:static/
+      static-locations: classpath:static/,file:${UPLOAD_BASE_PATH:static}/
+
+# Upload directory (externalized via UPLOAD_BASE_PATH env var)
+upload:
+  base-path: ${UPLOAD_BASE_PATH:}
 
 #mybatis
 mybatis-plus:

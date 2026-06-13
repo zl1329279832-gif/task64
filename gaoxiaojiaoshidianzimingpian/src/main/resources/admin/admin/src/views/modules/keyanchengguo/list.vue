@@ -70,7 +70,7 @@
                         <a style="text-decoration:none" class="el-button el-button--success"
                            v-if="isAuth('keyanchengguo','导入导出')"
                            icon="el-icon-download"
-                           href="http://localhost:8080/gaoxiaojiaoshidianzimingpian/upload/keyanchengguoMuBan.xls"
+                           href="/gaoxiaojiaoshidianzimingpian/upload/keyanchengguoMuBan.xls"
                         >批量导入科研成果数据模板</a>
                         &nbsp;
                         <el-upload

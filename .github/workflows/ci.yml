@@ -1,0 +1,79 @@
+name: CI — Build & Docker Image
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      # ---- Checkout ----
+      - uses: actions/checkout@v4
+
+      # ---- Node: build admin frontend ----
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '14'
+          cache: 'npm'
+          cache-dependency-path: gaoxiaojiaoshidianzimingpian/src/main/resources/admin/admin/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: gaoxiaojiaoshidianzimingpian/src/main/resources/admin/admin
+        run: npm install --registry=https://registry.npmmirror.com
+
+      - name: Build admin frontend
+        working-directory: gaoxiaojiaoshidianzimingpian/src/main/resources/admin/admin
+        run: npm run build
+
+      # ---- Java: build Spring Boot JAR ----
+      - name: Setup JDK 8
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '8'
+          cache: 'maven'
+
+      - name: Maven package
+        working-directory: gaoxiaojiaoshidianzimingpian
+        run: mvn package -DskipTests -B
+
+      # ---- Upload JAR artifact ----
+      - name: Upload JAR
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: gaoxiaojiaoshidianzimingpian/target/gaoxiaojiaoshidianzimingpian-0.0.1-SNAPSHOT.jar
+
+  docker:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push'
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        run: |
+          docker build -t gaoxiaojiaoshidianzimingpian:${{ github.sha }} .
+          docker tag gaoxiaojiaoshidianzimingpian:${{ github.sha }} gaoxiaojiaoshidianzimingpian:latest
+
+      # To push to a registry, uncomment below and add secrets:
+      # - name: Login to Registry
+      #   uses: docker/login-action@v3
+      #   with:
+      #     registry: ${{ secrets.REGISTRY_URL }}
+      #     username: ${{ secrets.REGISTRY_USER }}
+      #     password: ${{ secrets.REGISTRY_PASSWORD }}
+      #
+      # - name: Push image
+      #   run: |
+      #     docker tag gaoxiaojiaoshidianzimingpian:latest ${{ secrets.REGISTRY_URL }}/gaoxiaojiaoshidianzimingpian:latest
+      #     docker push ${{ secrets.REGISTRY_URL }}/gaoxiaojiaoshidianzimingpian:latest
