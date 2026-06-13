@@ -35,5 +35,10 @@ public class MingpianServiceImpl extends ServiceImpl<MingpianDao, MingpianEntity
         return new PageUtils(page);
     }
 
+    @Override
+    public int incrementClicknum(Integer id) {
+        return baseMapper.incrementClicknum(id);
+    }
+
 
 }

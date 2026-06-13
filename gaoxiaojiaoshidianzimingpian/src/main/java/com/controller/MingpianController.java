@@ -60,6 +60,9 @@ public class MingpianController {
     @Autowired
     private XueshengService xueshengService;
 
+    @Autowired
+    private KeyanchengguoService keyanchengguoService;
+
 
     /**
     * 后端列表
@@ -140,6 +143,7 @@ public class MingpianController {
             mingpian.setMingpianClicknum(1);
             mingpian.setShangxiaTypes(1);
             mingpian.setMingpianDelete(1);
+            mingpian.setVersion(1);
             mingpian.setCreateTime(new Date());
             mingpianService.insert(mingpian);
             return R.ok();
@@ -166,6 +170,7 @@ public class MingpianController {
             .andNew()
             .eq("jiaoshi_id", mingpian.getJiaoshiId())
             .eq("mingpian_delete", 1)
+            .eq("shangxia_types", 1)
             ;
 
         logger.info("sql语句:"+queryWrapper.getSqlSegment());
@@ -208,26 +213,46 @@ public class MingpianController {
 
 
     /**
-     * 回退
+     * 回退（支持恢复删除和归档版本）
      */
     @RequestMapping("/huitui")
     public R huitui(@RequestParam("id") Integer id){
-        logger.debug("delete:,,Controller:{},,huitui:{}",this.getClass().getName(),id);
+        logger.debug("huitui:,,Controller:{},,id:{}",this.getClass().getName(),id);
 
         MingpianEntity mingpianEntity = mingpianService.selectById(id);
         if(mingpianEntity == null)
-            return R.error("差不到名片");
-        else if(mingpianEntity.getMingpianDelete() !=2)
-            return R.error("名片不是删除状态");
-        MingpianEntity mingpianEntity1 = mingpianService.selectOne(new EntityWrapper<MingpianEntity>()
+            return R.error("查不到名片");
+        // 支持恢复已删除(2)和已归档(3)的名片
+        if(mingpianEntity.getMingpianDelete() != 2 && mingpianEntity.getMingpianDelete() != 3)
+            return R.error("名片不是删除或归档状态，无法回退");
+
+        // 查找同一教师当前有效展示版
+        MingpianEntity currentActive = mingpianService.selectOne(new EntityWrapper<MingpianEntity>()
                 .eq("jiaoshi_id", mingpianEntity.getJiaoshiId())
                 .eq("mingpian_delete", 1)
+                .eq("shangxia_types", 1)
         );
 
-        if(mingpianEntity1 != null)
-            return R.error("当前老师现在已有名片,无法回退");
+        // 若有效展示版存在，先归档
+        if(currentActive != null){
+            currentActive.setMingpianDelete(3);
+            mingpianService.updateById(currentActive);
+        }
 
+        // 检查是否有待审核版本，如有也一并归档
+        MingpianEntity pendingVersion = mingpianService.selectOne(new EntityWrapper<MingpianEntity>()
+                .eq("jiaoshi_id", mingpianEntity.getJiaoshiId())
+                .eq("mingpian_delete", 1)
+                .eq("shangxia_types", 3)
+        );
+        if(pendingVersion != null){
+            pendingVersion.setMingpianDelete(3);
+            mingpianService.updateById(pendingVersion);
+        }
+
+        // 恢复目标版本
         mingpianEntity.setMingpianDelete(1);
+        mingpianEntity.setShangxiaTypes(1);
         mingpianService.updateById(mingpianEntity);
         return R.ok();
     }
@@ -361,6 +386,14 @@ public class MingpianController {
         if(StringUtil.isEmpty(String.valueOf(params.get("orderBy")))){
             params.put("orderBy","id");
         }
+        // 前台默认只展示已通过审核的名片
+        if(params.get("shangxiaTypes") == null || "".equals(params.get("shangxiaTypes"))){
+            params.put("shangxiaTypes","1");
+        }
+        // 前台默认只展示有效名片
+        if(params.get("mingpianDelete") == null || "".equals(params.get("mingpianDelete"))){
+            params.put("mingpianDelete","1");
+        }
         PageUtils page = mingpianService.queryPage(params);
 
         //字典表数据转换
@@ -379,9 +412,9 @@ public class MingpianController {
         MingpianEntity mingpian = mingpianService.selectById(id);
             if(mingpian !=null){
 
-                //点击数量加1
+                //点击数量加1（原子更新）
+                mingpianService.incrementClicknum(mingpian.getId());
                 mingpian.setMingpianClicknum(mingpian.getMingpianClicknum()+1);
-                mingpianService.updateById(mingpian);
 
                 //entity转view
                 MingpianView view = new MingpianView();
@@ -395,7 +428,16 @@ public class MingpianController {
                 }
                 //修改对应字典表字段
                 dictionaryService.dictionaryConvert(view, request);
-                return R.ok().put("data", view);
+
+                //聚合科研成果
+                List<KeyanchengguoEntity> keyanchengguoList = keyanchengguoService.selectList(
+                    new EntityWrapper<KeyanchengguoEntity>()
+                        .eq("jiaoshi_id", mingpian.getJiaoshiId())
+                        .eq("keyanchengguo_delete", 1)
+                        .eq("shangxia_types", 1)
+                );
+
+                return R.ok().put("data", view).put("keyanchengguoList", keyanchengguoList);
             }else {
                 return R.error(511,"查不到数据");
             }
@@ -434,6 +476,142 @@ public class MingpianController {
         }else {
             return R.error(511,"表中有相同数据");
         }
+    }
+
+
+    /**
+     * 教师提交新版本（走审核上架）
+     */
+    @RequestMapping("/submitVersion")
+    public R submitVersion(@RequestBody MingpianEntity mingpian, HttpServletRequest request){
+        logger.debug("submitVersion方法:,,Controller:{},,mingpian:{}",this.getClass().getName(),mingpian.toString());
+
+        String role = String.valueOf(request.getSession().getAttribute("role"));
+        if(!"教师".equals(role))
+            return R.error(511,"只有教师可以提交新版本");
+
+        Integer jiaoshiId = Integer.valueOf(String.valueOf(request.getSession().getAttribute("userId")));
+        mingpian.setJiaoshiId(jiaoshiId);
+
+        // 查找当前有效展示版
+        MingpianEntity currentActive = mingpianService.selectOne(new EntityWrapper<MingpianEntity>()
+                .eq("jiaoshi_id", jiaoshiId)
+                .eq("mingpian_delete", 1)
+                .eq("shangxia_types", 1)
+        );
+        if(currentActive == null)
+            return R.error(511,"当前无有效名片，请先创建名片");
+
+        // 检查是否已有待审核版本
+        MingpianEntity pendingVersion = mingpianService.selectOne(new EntityWrapper<MingpianEntity>()
+                .eq("jiaoshi_id", jiaoshiId)
+                .eq("mingpian_delete", 1)
+                .eq("shangxia_types", 3)
+        );
+        if(pendingVersion != null)
+            return R.error(511,"已有版本待审核，请等待审核完成");
+
+        // 创建新版本记录
+        mingpian.setId(null);
+        mingpian.setVersion(currentActive.getVersion() != null ? currentActive.getVersion() + 1 : 2);
+        mingpian.setShangxiaTypes(3); // 待审核
+        mingpian.setMingpianDelete(1);
+        mingpian.setMingpianClicknum(currentActive.getMingpianClicknum()); // 继承点击量
+        mingpian.setCreateTime(new Date());
+        mingpianService.insert(mingpian);
+        return R.ok();
+    }
+
+
+    /**
+     * 管理员审核通过
+     */
+    @RequestMapping("/approve/{id}")
+    public R approve(@PathVariable("id") Integer id, HttpServletRequest request){
+        logger.debug("approve方法:,,Controller:{},,id:{}",this.getClass().getName(),id);
+
+        String role = String.valueOf(request.getSession().getAttribute("role"));
+        if("教师".equals(role) || "学生".equals(role))
+            return R.error(511,"无审核权限");
+
+        MingpianEntity newVersion = mingpianService.selectById(id);
+        if(newVersion == null)
+            return R.error(511,"查不到该名片");
+        if(newVersion.getShangxiaTypes() == null || newVersion.getShangxiaTypes() != 3)
+            return R.error(511,"该名片不在待审核状态");
+
+        // 归档旧的有效展示版
+        MingpianEntity currentActive = mingpianService.selectOne(new EntityWrapper<MingpianEntity>()
+                .eq("jiaoshi_id", newVersion.getJiaoshiId())
+                .eq("mingpian_delete", 1)
+                .eq("shangxia_types", 1)
+        );
+        if(currentActive != null){
+            currentActive.setMingpianDelete(3); // 归档
+            mingpianService.updateById(currentActive);
+        }
+
+        // 新版上架
+        newVersion.setShangxiaTypes(1);
+        mingpianService.updateById(newVersion);
+        return R.ok();
+    }
+
+
+    /**
+     * 管理员驳回
+     */
+    @RequestMapping("/reject/{id}")
+    public R reject(@PathVariable("id") Integer id, HttpServletRequest request){
+        logger.debug("reject方法:,,Controller:{},,id:{}",this.getClass().getName(),id);
+
+        String role = String.valueOf(request.getSession().getAttribute("role"));
+        if("教师".equals(role) || "学生".equals(role))
+            return R.error(511,"无审核权限");
+
+        MingpianEntity mingpianEntity = mingpianService.selectById(id);
+        if(mingpianEntity == null)
+            return R.error(511,"查不到该名片");
+        if(mingpianEntity.getShangxiaTypes() == null || mingpianEntity.getShangxiaTypes() != 3)
+            return R.error(511,"该名片不在待审核状态");
+
+        // 驳回：设为不展示并软删除
+        mingpianEntity.setShangxiaTypes(2);
+        mingpianEntity.setMingpianDelete(2);
+        mingpianService.updateById(mingpianEntity);
+        return R.ok();
+    }
+
+
+    /**
+     * 查看版本历史
+     */
+    @RequestMapping("/versions")
+    public R versions(@RequestParam Map<String, Object> params, HttpServletRequest request){
+        logger.debug("versions方法:,,Controller:{},,params:{}",this.getClass().getName(),JSONObject.toJSONString(params));
+
+        String role = String.valueOf(request.getSession().getAttribute("role"));
+        Integer jiaoshiId;
+        if("教师".equals(role)){
+            // 教师只能查看自己的版本历史
+            jiaoshiId = Integer.valueOf(String.valueOf(request.getSession().getAttribute("userId")));
+        } else if("学生".equals(role)){
+            return R.error(511,"学生无法查看版本历史");
+        } else {
+            // 管理员可以通过参数指定教师
+            if(params.get("jiaoshiId") == null || "".equals(params.get("jiaoshiId")))
+                return R.error(511,"请指定教师ID");
+            jiaoshiId = Integer.valueOf(String.valueOf(params.get("jiaoshiId")));
+        }
+
+        // 查询该教师所有版本（有效、已删除、已归档）
+        List<MingpianEntity> versionList = mingpianService.selectList(
+            new EntityWrapper<MingpianEntity>()
+                .eq("jiaoshi_id", jiaoshiId)
+                .in("mingpian_delete", new Object[]{1, 2, 3})
+                .orderBy("version", false)
+        );
+        return R.ok().put("data", versionList);
     }
 
 

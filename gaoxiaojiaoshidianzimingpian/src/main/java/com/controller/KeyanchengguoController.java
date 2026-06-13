@@ -327,9 +327,9 @@ public class KeyanchengguoController {
         KeyanchengguoEntity keyanchengguo = keyanchengguoService.selectById(id);
             if(keyanchengguo !=null){
 
-                //点击数量加1
+                //点击数量加1（原子更新）
+                keyanchengguoService.incrementClicknum(keyanchengguo.getId());
                 keyanchengguo.setKeyanchengguoClicknum(keyanchengguo.getKeyanchengguoClicknum()+1);
-                keyanchengguoService.updateById(keyanchengguo);
 
                 //entity转view
                 KeyanchengguoView view = new KeyanchengguoView();

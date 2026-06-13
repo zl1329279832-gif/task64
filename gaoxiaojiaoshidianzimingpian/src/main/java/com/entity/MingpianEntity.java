@@ -183,6 +183,14 @@ public class MingpianEntity<T> implements Serializable {
 
 
     /**
+     * 版本号
+     */
+    @TableField(value = "version")
+
+    private Integer version;
+
+
+    /**
      * 逻辑删除
      */
     @TableField(value = "mingpian_delete")
@@ -422,6 +430,19 @@ public class MingpianEntity<T> implements Serializable {
         this.shangxiaTypes = shangxiaTypes;
     }
     /**
+	 * 设置：版本号
+	 */
+    public Integer getVersion() {
+        return version;
+    }
+    /**
+	 * 获取：版本号
+	 */
+
+    public void setVersion(Integer version) {
+        this.version = version;
+    }
+    /**
 	 * 设置：逻辑删除
 	 */
     public Integer getMingpianDelete() {
@@ -468,6 +489,7 @@ public class MingpianEntity<T> implements Serializable {
             ", mingpianClicknum=" + mingpianClicknum +
             ", mingpianContent=" + mingpianContent +
             ", shangxiaTypes=" + shangxiaTypes +
+            ", version=" + version +
             ", mingpianDelete=" + mingpianDelete +
             ", createTime=" + createTime +
         "}";

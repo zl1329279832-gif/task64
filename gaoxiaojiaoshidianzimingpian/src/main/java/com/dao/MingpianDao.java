@@ -18,4 +18,6 @@ public interface MingpianDao extends BaseMapper<MingpianEntity> {
 
    List<MingpianView> selectListView(Pagination page,@Param("params")Map<String,Object> params);
 
+   int incrementClicknum(@Param("id") Integer id);
+
 }

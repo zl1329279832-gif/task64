@@ -35,5 +35,10 @@ public class KeyanchengguoServiceImpl extends ServiceImpl<KeyanchengguoDao, Keya
         return new PageUtils(page);
     }
 
+    @Override
+    public int incrementClicknum(Integer id) {
+        return baseMapper.incrementClicknum(id);
+    }
+
 
 }

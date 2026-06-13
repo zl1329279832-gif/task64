@@ -16,4 +16,9 @@ public interface KeyanchengguoService extends IService<KeyanchengguoEntity> {
     * @return 带分页的查询出来的数据
     */
      PageUtils queryPage(Map<String, Object> params);
+
+    /**
+     * 原子递增点击量
+     */
+     int incrementClicknum(Integer id);
 }

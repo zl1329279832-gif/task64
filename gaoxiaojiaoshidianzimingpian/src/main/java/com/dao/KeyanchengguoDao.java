@@ -18,4 +18,6 @@ public interface KeyanchengguoDao extends BaseMapper<KeyanchengguoEntity> {
 
    List<KeyanchengguoView> selectListView(Pagination page,@Param("params")Map<String,Object> params);
 
+   int incrementClicknum(@Param("id") Integer id);
+
 }
