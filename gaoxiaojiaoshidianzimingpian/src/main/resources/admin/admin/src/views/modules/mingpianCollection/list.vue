@@ -67,7 +67,7 @@
                         <a style="text-decoration:none" class="el-button el-button--success"
                            v-if="isAuth('mingpianCollection','导入导出')"
                            icon="el-icon-download"
-                           href="http://localhost:8080/gaoxiaojiaoshidianzimingpian/upload/mingpianCollectionMuBan.xls"
+                           href="/gaoxiaojiaoshidianzimingpian/upload/mingpianCollectionMuBan.xls"
                         >批量导入名片收藏数据模板</a>
                         &nbsp;
                         <el-upload

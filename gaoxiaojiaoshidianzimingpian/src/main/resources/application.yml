@@ -1,3 +1,10 @@
+# ===========================================================
+# DEV profile (default). For production: -Dspring.profiles.active=prod
+# ===========================================================
+
+upload:
+  base-path: ${UPLOAD_BASE_PATH:./static/upload}
+
 # Tomcat
 server:
     tomcat:

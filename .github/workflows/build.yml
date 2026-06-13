@@ -1,0 +1,71 @@
+name: Build & Package
+
+on:
+  push:
+    branches: [main, master, develop]
+  pull_request:
+    branches: [main, master]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    name: Maven Build + Frontend
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 8
+        uses: actions/setup-java@v4
+        with:
+          java-version: '8'
+          distribution: 'temurin'
+          cache: maven
+
+      - name: Set up Node 12
+        uses: actions/setup-node@v4
+        with:
+          node-version: '12'
+          cache: 'npm'
+          cache-dependency-path: gaoxiaojiaoshidianzimingpian/src/main/resources/admin/admin/package-lock.json
+
+      - name: Build Frontend
+        working-directory: gaoxiaojiaoshidianzimingpian/src/main/resources/admin/admin
+        run: |
+          npm ci --legacy-peer-deps || npm install
+          npm run build
+
+      - name: Maven Package
+        working-directory: gaoxiaojiaoshidianzimingpian
+        run: mvn clean package -DskipTests -B
+
+      - name: Upload JAR artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: app-jar
+          path: gaoxiaojiaoshidianzimingpian/target/gaoxiaojiaoshidianzimingpian-*.jar
+          retention-days: 30
+
+  docker:
+    runs-on: ubuntu-latest
+    name: Docker Image Build
+    needs: build
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master')
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: false
+          tags: gxjs-card:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          # 如需推送到 registry，取消注释以下行并配置 secrets:
+          # push: true
+          # tags: ${{ secrets.REGISTRY_URL }}/gxjs-card:latest,${{ secrets.REGISTRY_URL }}/gxjs-card:${{ github.sha }}

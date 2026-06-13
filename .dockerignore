@@ -1,0 +1,39 @@
+# Build artifacts
+target/
+build/
+out/
+
+# Git
+.git/
+.gitignore
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# Node
+node_modules/
+npm-debug.log*
+
+# Docs
+README.md
+BUILD.md
+LICENSE
+
+# Docker
+docker-compose.yml
+Dockerfile
+.dockerignore
+
+# Deploy configs (not needed inside image)
+deploy/
+.env*
+
+# CI
+.github/
+
+# Data
+data/
+mysql-data/
+*.log

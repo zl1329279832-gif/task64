@@ -6,8 +6,6 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
-import javax.servlet.http.HttpServletRequest;
-
 import com.alibaba.fastjson.JSON;
 import com.utils.StringUtil;
 import org.apache.commons.lang3.StringUtils;
@@ -15,7 +13,7 @@ import org.json.JSONObject;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.util.ResourceUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -43,10 +41,13 @@ public class CommonController{
 	private static final Logger logger = LoggerFactory.getLogger(CommonController.class);
 	@Autowired
 	private CommonService commonService;
-	
+
 	@Autowired
 	private ConfigService configService;
-	
+
+	@Value("${upload.base-path}")
+	private String uploadBasePath;
+
 	private static AipFace client = null;
 	
 	private static String BAIDU_DITU_AK = null;
@@ -71,7 +72,7 @@ public class CommonController{
 	 * @return
 	 */
 	@RequestMapping("/matchFace")
-	public R matchFace(String face1, String face2, HttpServletRequest request) {
+	public R matchFace(String face1, String face2) {
 		if(client==null) {
 			/*String AppID = configService.selectOne(new EntityWrapper<ConfigEntity>().eq("name", "AppID")).getValue();*/
 			String APIKey = configService.selectOne(new EntityWrapper<ConfigEntity>().eq("name", "APIKey")).getValue();
@@ -86,8 +87,8 @@ public class CommonController{
 		}
 		JSONObject res = null;
 		try {
-			File file1 = new File(request.getSession().getServletContext().getRealPath("/upload")+"/"+face1);
-			File file2 = new File(request.getSession().getServletContext().getRealPath("/upload")+"/"+face2);
+			File file1 = new File(uploadBasePath + "/" + face1);
+			File file2 = new File(uploadBasePath + "/" + face2);
 			String img1 = Base64Util.encode(FileUtil.FileToByte(file1));
 			String img2 = Base64Util.encode(FileUtil.FileToByte(file2));
 			MatchRequest req1 = new MatchRequest(img1, "BASE64");

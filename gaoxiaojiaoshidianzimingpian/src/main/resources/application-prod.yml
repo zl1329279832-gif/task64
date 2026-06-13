@@ -1,0 +1,43 @@
+# ===========================================================
+# PROD profile — activated via -Dspring.profiles.active=prod
+# All secrets MUST come from environment variables.
+# ===========================================================
+
+server:
+  port: 8080
+
+spring:
+  datasource:
+    driverClassName: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/${DB_NAME:gaoxiaojiaoshidianzimingpian}?useUnicode=true&characterEncoding=utf-8&useJDBCCompliantTimezoneShift=true&useLegacyDatetimeCode=false&serverTimezone=GMT%2B8
+    username: ${DB_USER:root}
+    password: ${DB_PASSWORD}
+
+  resources:
+    static-locations: classpath:static/,file:static/
+
+upload:
+  base-path: ${UPLOAD_BASE_PATH:/data/uploads}
+
+#mybatis
+mybatis-plus:
+  mapper-locations: classpath*:mapper/*.xml
+  typeAliasesPackage: com.entity
+  global-config:
+    id-type: 1
+    field-strategy: 2
+    db-column-underline: true
+    refresh-mapper: true
+    logic-delete-value: -1
+    logic-not-delete-value: 0
+    sql-injector: com.baomidou.mybatisplus.mapper.LogicSqlInjector
+  configuration:
+    map-underscore-to-camel-case: true
+    cache-enabled: false
+    call-setters-on-nulls: true
+    jdbc-type-for-null: 'null'
+
+logging:
+  level:
+    root: info
+    com.dao: warn

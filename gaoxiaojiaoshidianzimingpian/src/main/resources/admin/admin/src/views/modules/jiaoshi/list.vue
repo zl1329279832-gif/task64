@@ -47,7 +47,7 @@
                         <a style="text-decoration:none" class="el-button el-button--success"
                            v-if="isAuth('jiaoshi','导入导出')"
                            icon="el-icon-download"
-                           href="http://localhost:8080/gaoxiaojiaoshidianzimingpian/upload/jiaoshiMuBan.xls"
+                           href="/gaoxiaojiaoshidianzimingpian/upload/jiaoshiMuBan.xls"
                         >批量导入教师数据模板</a>
                         &nbsp;
                         <el-upload
