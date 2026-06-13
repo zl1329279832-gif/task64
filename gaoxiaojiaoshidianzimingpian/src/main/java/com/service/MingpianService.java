@@ -16,4 +16,9 @@ public interface MingpianService extends IService<MingpianEntity> {
     * @return 带分页的查询出来的数据
     */
      PageUtils queryPage(Map<String, Object> params);
+
+    /**
+     * 原子递增点击量
+     */
+    int incrementClickNum(Integer id);
 }

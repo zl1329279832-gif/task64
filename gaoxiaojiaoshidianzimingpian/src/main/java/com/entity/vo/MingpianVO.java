@@ -148,6 +148,14 @@ public class MingpianVO implements Serializable {
 
 
     /**
+     * 当前版本号
+     */
+
+    @TableField(value = "version_number")
+    private Integer versionNumber;
+
+
+    /**
      * 是否展示
      */
 
@@ -412,6 +420,21 @@ public class MingpianVO implements Serializable {
 
     public void setMingpianContent(String mingpianContent) {
         this.mingpianContent = mingpianContent;
+    }
+    /**
+	 * 设置：当前版本号
+	 */
+    public Integer getVersionNumber() {
+        return versionNumber;
+    }
+
+
+    /**
+	 * 获取：当前版本号
+	 */
+
+    public void setVersionNumber(Integer versionNumber) {
+        this.versionNumber = versionNumber;
     }
     /**
 	 * 设置：是否展示

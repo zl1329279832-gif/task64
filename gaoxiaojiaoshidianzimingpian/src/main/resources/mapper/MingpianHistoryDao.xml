@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.dao.MingpianHistoryDao">
+
+    <!-- 通用查询结果列 -->
+    <sql id="Base_Column_List">
+        h.id as id
+        ,h.mingpian_id as mingpianId
+        ,h.jiaoshi_id as jiaoshiId
+        ,h.version_number as versionNumber
+        ,h.mingpian_name as mingpianName
+        ,h.mingpian_uuid_number as mingpianUuidNumber
+        ,h.mingpian_xingming as mingpianXingming
+        ,h.mingpian_phone as mingpianPhone
+        ,h.mingpian_file as mingpianFile
+        ,h.sex_types as sexTypes
+        ,h.zhiwu_types as zhiwuTypes
+        ,h.mingpian_photo as mingpianPhoto
+        ,h.mingpian_types as mingpianTypes
+        ,h.xueyuan_types as xueyuanTypes
+        ,h.bangongshi_types as bangongshiTypes
+        ,h.kecheng_types as kechengTypes
+        ,h.mingpian_clicknum as mingpianClicknum
+        ,h.mingpian_content as mingpianContent
+        ,h.shangxia_types as shangxiaTypes
+        ,h.snapshot_time as snapshotTime
+        ,h.snapshot_reason as snapshotReason
+        ,h.create_time as createTime
+    </sql>
+    <select id="selectListView" parameterType="map" resultType="com.entity.view.MingpianHistoryView" >
+        SELECT
+        <include refid="Base_Column_List" />
+
+--         级联表的字段
+        ,jiaoshi.jiaoshi_uuid_number as jiaoshiUuidNumber
+        ,jiaoshi.jiaoshi_name as jiaoshiName
+        ,jiaoshi.jiaoshi_phone as jiaoshiPhone
+        ,jiaoshi.jiaoshi_photo as jiaoshiPhoto
+
+        FROM mingpian_history  h
+        left JOIN jiaoshi jiaoshi ON h.jiaoshi_id = jiaoshi.id
+
+        <where>
+            <if test="params.mingpianId != null and params.mingpianId != ''">
+                and h.mingpian_id = #{params.mingpianId}
+            </if>
+            <if test="params.jiaoshiId != null and params.jiaoshiId != ''">
+                and h.jiaoshi_id = #{params.jiaoshiId}
+            </if>
+            <if test="params.shangxiaTypes != null and params.shangxiaTypes != ''">
+                and h.shangxia_types = #{params.shangxiaTypes}
+            </if>
+        </where>
+
+        order by h.version_number desc
+    </select>
+
+</mapper>

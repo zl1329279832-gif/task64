@@ -18,4 +18,9 @@ public interface MingpianDao extends BaseMapper<MingpianEntity> {
 
    List<MingpianView> selectListView(Pagination page,@Param("params")Map<String,Object> params);
 
+   /**
+    * 原子递增点击量
+    */
+   int incrementClickNum(@Param("id") Integer id);
+
 }

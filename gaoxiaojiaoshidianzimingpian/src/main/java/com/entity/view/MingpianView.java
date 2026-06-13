@@ -8,6 +8,7 @@ import org.springframework.format.annotation.DateTimeFormat;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import java.io.Serializable;
 import java.util.Date;
+import java.util.List;
 
 /**
  * 名片
@@ -74,6 +75,11 @@ public class MingpianView extends MingpianEntity implements Serializable {
 			* 电子邮箱
 			*/
 			private String jiaoshiEmail;
+
+		/**
+		* 科研成果列表
+		*/
+		private List<KeyanchengguoView> keyanchengguoList;
 
 	public MingpianView() {
 
@@ -270,6 +276,20 @@ public class MingpianView extends MingpianEntity implements Serializable {
 					*/
 					public void setJiaoshiEmail(String jiaoshiEmail) {
 						this.jiaoshiEmail = jiaoshiEmail;
+					}
+
+
+					/**
+					* 获取： 科研成果列表
+					*/
+					public List<KeyanchengguoView> getKeyanchengguoList() {
+						return keyanchengguoList;
+					}
+					/**
+					* 设置： 科研成果列表
+					*/
+					public void setKeyanchengguoList(List<KeyanchengguoView> keyanchengguoList) {
+						this.keyanchengguoList = keyanchengguoList;
 					}
 
 
